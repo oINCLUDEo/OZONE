@@ -1,6 +1,34 @@
 <?php
 session_start();
+
+// Подключение к базе данных
 $pdo = new PDO("pgsql:host=localhost;dbname=marketplace", "postgres", "1");
+
+// Проверка, вошел ли пользователь
+$user_id = $_SESSION['user_id'] ?? null;
+
+// Если пользователь вошел, получаем его данные
+$user = null;
+if ($user_id) {
+    $stmt = $pdo->prepare("SELECT * FROM users WHERE id = :id");
+    $stmt->execute(['id' => $user_id]);
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+}
+
+
+// Получаем список категорий для навигации
+$categoriesStmt = $pdo->query("SELECT * FROM categories");
+
+// Получаем товары в зависимости от выбранной категории
+$category = isset($_GET['category']) ? intval($_GET['category']) : null;
+$query = "SELECT * FROM products";
+if ($category) {
+    $query .= " WHERE category_id = :category";
+    $productsStmt = $pdo->prepare($query);
+    $productsStmt->execute(['category' => $category]);
+} else {
+    $productsStmt = $pdo->query($query);
+}
 ?>
 
 <!DOCTYPE html>
@@ -36,7 +64,8 @@ $pdo = new PDO("pgsql:host=localhost;dbname=marketplace", "postgres", "1");
     <div id="user-menu">
         <?php if (isset($_SESSION['user_id'])): ?>
             <a href="profile.php">
-                <img src="<?= $_SESSION['avatar'] ?? 'default_avatar.jpg' ?>" alt="Аватар" class="header-avatar">
+                <!-- Путь к аватару пользователя или дефолтный аватар -->
+                <img src="<?= isset($user['avatar']) && !empty($user['avatar']) ? htmlspecialchars($user['avatar']) : 'default_avatar.jpg' ?>" alt="Аватар" class="header-avatar">
             </a>
             <a href="logout.php">Выйти</a>
         <?php else: ?>
@@ -48,9 +77,7 @@ $pdo = new PDO("pgsql:host=localhost;dbname=marketplace", "postgres", "1");
 <!-- Выдвижной каталог -->
 <nav id="sidebar">
     <ul>
-        <?php
-        $stmt = $pdo->query("SELECT * FROM categories");
-        while ($category = $stmt->fetch(PDO::FETCH_ASSOC)): ?>
+        <?php while ($category = $categoriesStmt->fetch(PDO::FETCH_ASSOC)): ?>
             <li><a href="index.php?category=<?= $category['id'] ?>"><?= htmlspecialchars($category['name']) ?></a></li>
         <?php endwhile; ?>
     </ul>
@@ -60,18 +87,7 @@ $pdo = new PDO("pgsql:host=localhost;dbname=marketplace", "postgres", "1");
 <main>
     <h1>Товары</h1>
     <div class="products">
-        <?php
-        $category = isset($_GET['category']) ? intval($_GET['category']) : null;
-        $query = "SELECT * FROM products";
-        if ($category) {
-            $query .= " WHERE category_id = :category";
-            $stmt = $pdo->prepare($query);
-            $stmt->execute(['category' => $category]);
-        } else {
-            $stmt = $pdo->query($query);
-        }
-
-        while ($product = $stmt->fetch(PDO::FETCH_ASSOC)): ?>
+        <?php while ($product = $productsStmt->fetch(PDO::FETCH_ASSOC)): ?>
             <div class="product">
                 <img src="images/<?= htmlspecialchars($product['main_image']) ?>" alt="<?= htmlspecialchars($product['name']) ?>">
                 <h2><?= htmlspecialchars($product['name']) ?></h2>

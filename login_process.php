@@ -21,7 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt = $pdo->prepare("SELECT * FROM users WHERE username = :username");
     $stmt->execute(['username' => $username]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
+    echo $user['username'];
     // Если пользователь найден и пароли совпадают
     if ($user && password_verify($password, $user['password'])) {
         // Устанавливаем сессию
