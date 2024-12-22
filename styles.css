@@ -178,20 +178,6 @@ main {
     background-color: #0056b3;
 }
 
-/* Кнопки и формы */
-button {
-    padding: 10px 20px;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-}
-
-button:hover {
-    background-color: #0056b3;
-}
-
 input,
 textarea,
 select {
@@ -318,4 +304,145 @@ select:focus {
     width: 80%;
     max-height: 100%;
     object-fit: contain;
+}
+#login-body{
+    background-color: #090315;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+/* Логотип */
+.logo-container {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.logo {
+    font-family: 'Michroma', sans-serif;
+    font-size: 4rem;
+    color: #fff;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    animation: logoAnim 1s ease-out;
+}
+
+@keyframes logoAnim {
+    0% {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+
+/* Контейнер формы */
+.login-container {
+    background-color: #2c2f40; /* Темно фиолетовый оттенок */
+    padding: 40px;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    width: 100%;
+    max-width: 400px;
+    animation: fadeIn 1s ease-out;
+}
+
+
+@keyframes logoAnim {
+    0% {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Контейнер формы */
+.login-container {
+    background-color: #2c2f40; /* Темно фиолетовый оттенок */
+    padding: 40px;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    width: 100%;
+    max-width: 400px;
+    animation: fadeIn 1s ease-out;
+}
+
+@keyframes fadeIn {
+    0% {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Стили для формы */
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+label {
+    font-size: 1.2rem;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+input {
+    padding: 10px;
+    font-size: 1rem;
+    border: 2px solid #2c2f40;
+    border-radius: 5px;
+    background-color: #3d3f50;
+    color: white;
+    transition: border-color 0.3s ease;
+}
+
+input:focus {
+    border-color: #7f47c2; /* Светлый фиолетовый при фокусе */
+    outline: none;
+}
+
+button {
+    padding: 12px;
+    font-size: 1.1rem;
+    background-color: #7f47c2; /* Светлый фиолетовый */
+    border: none;
+    border-radius: 5px;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    background-color: #5f2b99; /* Темный фиолетовый при наведении */
+}
+
+.signup-link {
+    text-align: center;
+    font-size: 0.9rem;
+}
+
+.signup-link a {
+    color: #7f47c2;
+    text-decoration: none;
+}
+
+.signup-link a:hover {
+    text-decoration: underline;
 }

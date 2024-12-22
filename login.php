@@ -17,7 +17,7 @@ if (isset($_SESSION['user_id'])) {
     <link href="https://fonts.googleapis.com/css2?family=Michroma&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css"> <!-- Подключение основного стиля -->
 </head>
-<body>
+<body id="login-body">
 
 <!-- Форма входа -->
 <div class="login-container">
