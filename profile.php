@@ -59,7 +59,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['contact'])) {
 <a href="index.php" id="back-arrow">← Назад</a>
 
 <!-- Логотип магазина -->
-<a href="index.php" id="logo">Магазин</a>
+<div id="logo">
+    <a href="index.php" id="logo">
+        <span style="color: #090315">OZONE</span> <!-- Логотип как текст -->
+    </a>
+</div>
 
 <h1 id="profile-header">Профиль пользователя</h1>
 <div class="profile">
