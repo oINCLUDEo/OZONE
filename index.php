@@ -30,7 +30,7 @@ $pdo = new PDO("pgsql:host=localhost;dbname=marketplace", "postgres", "1");
 </header>
 
 <!-- Выдвижной каталог -->
-<nav id="sidebar" class="hidden">
+<nav id="sidebar">
     <ul>
         <?php
         $stmt = $pdo->query("SELECT * FROM categories");
@@ -65,12 +65,30 @@ $pdo = new PDO("pgsql:host=localhost;dbname=marketplace", "postgres", "1");
 </main>
 
 <script>
-    const menuBtn = document.getElementById('menu-btn');
     const sidebar = document.getElementById('sidebar');
+    const menuBtn = document.getElementById('menu-btn');
 
-    menuBtn.addEventListener('click', () => {
-        sidebar.classList.toggle('hidden');
+    // При наведении на кнопку меню
+    menuBtn.addEventListener('mouseover', () => {
+        sidebar.classList.add('active'); // Добавляем класс для активации
     });
+
+    // Когда мышь входит в каталог (sidebar)
+    sidebar.addEventListener('mouseenter', () => {
+        sidebar.classList.add('active'); // Удерживаем каталог активным
+    });
+
+    // При уходе мыши с каталога
+    sidebar.addEventListener('mouseleave', () => {
+        sidebar.classList.remove('active'); // Убираем класс для скрытия
+    });
+
+    // При уходе мыши с кнопки меню
+    menuBtn.addEventListener('mouseleave', () => {
+        sidebar.classList.remove('active'); // Убираем класс для скрытия
+    });
+
 </script>
+
 </body>
 </html>

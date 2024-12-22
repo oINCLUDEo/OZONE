@@ -51,7 +51,7 @@ $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <input type="text" name="gallery" placeholder="Галерея (через запятую)" required>
     <select name="category_id" required>
         <?php foreach ($categories as $category): ?>
-            <option value="<?= $category['id'] ?>"><?= htmlspecialchars($category['name']) ?></option>
+            <option value="<?= $category['id'] ?>"><?= htmlspecialchars($category['name']) ?> - <?= htmlspecialchars($category['description']) ?></option> <!-- Добавлено описание категории -->
         <?php endforeach; ?>
     </select>
     <button type="submit">Добавить</button>

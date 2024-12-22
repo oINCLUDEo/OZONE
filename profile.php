@@ -33,6 +33,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['avatar'])) {
         exit();
     }
 }
+
+// Добавление/обновление контактов
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['contact'])) {
+    $contact = $_POST['contact'];
+    $stmt = $pdo->prepare("UPDATE users SET contact_info = :contact WHERE id = :id");
+    $stmt->execute([
+        'contact' => $contact,
+        'id' => $user_id
+    ]);
+    $user['contact_info'] = $contact;
+}
 ?>
 
 <!DOCTYPE html>
@@ -44,16 +55,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['avatar'])) {
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<h1>Профиль пользователя</h1>
+<!-- Стрелка для возврата на главную -->
+<a href="index.php" id="back-arrow">← Назад</a>
+
+<!-- Логотип магазина -->
+<a href="index.php" id="logo">Магазин</a>
+
+<h1 id="profile-header">Профиль пользователя</h1>
 <div class="profile">
-    <img src="<?= $user['avatar'] ? htmlspecialchars($user['avatar']) : 'default_avatar.png' ?>" alt="Аватар" class="avatar">
+    <!-- Изменение аватара по клику -->
+    <form method="post" enctype="multipart/form-data" id="avatar-form">
+        <label for="avatar">
+            <img src="<?= $user['avatar'] ? htmlspecialchars($user['avatar']) : 'default_avatar.jpg' ?>"
+                 alt="Аватар"
+                 class="avatar"
+                 id="profile-avatar">
+        </label>
+        <input type="file" name="avatar" id="avatar" accept="image/*" style="display: none;" required>
+        <button type="submit" id="avatar-submit" style="display: none;">Загрузить</button>
+    </form>
+
     <h2><?= htmlspecialchars($user['username']) ?></h2>
 
-    <form method="post" enctype="multipart/form-data">
-        <label for="avatar">Обновить аватар:</label>
-        <input type="file" name="avatar" id="avatar" accept="image/*" required>
-        <button type="submit">Загрузить</button>
+    <!-- Контактная информация -->
+    <form method="post">
+        <label for="contact">Контактная информация:</label>
+        <textarea name="contact" id="contact" placeholder="Введите ваши контактные данные"><?= htmlspecialchars($user['contact_info'] ?? '') ?></textarea>
+        <button type="submit">Сохранить</button>
     </form>
+
+    <!-- Переход в панель администратора -->
+    <?php if ($_SESSION['role'] === 'admin'): ?>
+        <a href="add_product.php" id="admin-panel">Перейти в панель администратора</a>
+    <?php endif; ?>
 </div>
+
+<script>
+    // Обработка клика по аватару
+    const avatarInput = document.getElementById('avatar');
+    const avatarSubmit = document.getElementById('avatar-submit');
+
+    avatarInput.addEventListener('change', () => {
+        avatarSubmit.click(); // Автоматически отправляет форму после выбора файла
+    });
+</script>
 </body>
 </html>

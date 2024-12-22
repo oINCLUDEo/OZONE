@@ -43,41 +43,55 @@ header #user-menu {
     margin-left: 10px;
 }
 
+/* Стрелка возврата */
+#back-arrow {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    font-size: 18px;
+    text-decoration: none;
+    color: #007bff;
+    font-weight: bold;
+}
+
+#back-arrow:hover {
+    text-decoration: underline;
+    color: #0056b3;
+}
+
+/* Аватар */
+.avatar {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    object-fit: cover; /* Теперь изображение будет заполнять область */
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.avatar:hover {
+    transform: scale(1.1); /* Небольшое увеличение при наведении */
+}
+
+
 /* Скрытый выдвижной каталог */
 #sidebar {
     position: absolute;
     top: 0;
-    left: 0;
+    left: -200px; /* Начальное положение вне экрана */
     width: 200px;
     height: 100%;
     background-color: #007bff;
     color: white;
     padding: 20px;
-    transform: translateX(-100%);
-    transition: transform 0.3s ease;
+    transition: left 0.3s ease, visibility 0.3s ease; /* Добавляем плавную анимацию для left и visibility */
+    visibility: hidden; /* Каталог скрыт по умолчанию */
 }
 
-#sidebar ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-#sidebar ul li {
-    margin-bottom: 10px;
-}
-
-#sidebar ul li a {
-    color: white;
-    text-decoration: none;
-}
-
-#sidebar.hidden {
-    transform: translateX(-100%);
-}
-
-#sidebar:not(.hidden) {
-    transform: translateX(0);
+/* Когда sidebar активен */
+#sidebar.active {
+    visibility: visible; /* Каталог видим */
+    left: 0; /* Выезжает на экран */
 }
 
 /* Основной контент */
@@ -226,4 +240,43 @@ select:focus {
     margin-top: 10px;
     width: 100px;
     text-align: center;
+}
+
+/* Логотип магазина */
+#logo {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 24px;
+    font-weight: bold;
+    color: #007bff;
+    text-decoration: none;
+}
+
+#logo:hover {
+    text-decoration: underline;
+}
+
+/* Заголовок профиля */
+#profile-header {
+    margin-top: 60px; /* Сдвиг вниз под логотип */
+    text-align: center;
+}
+
+/* Кнопка перехода в панель администратора */
+#admin-panel {
+    display: block;
+    margin-top: 20px;
+    padding: 10px 20px;
+    background-color: #28a745;
+    color: white;
+    text-decoration: none;
+    text-align: center;
+    border-radius: 5px;
+    font-weight: bold;
+}
+
+#admin-panel:hover {
+    background-color: #218838;
 }
