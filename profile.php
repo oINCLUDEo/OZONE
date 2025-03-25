@@ -1,6 +1,6 @@
 <?php
 session_start();
-$pdo = new PDO("pgsql:host=localhost;dbname=marketplace", "postgres", "1");
+require_once 'config.php';
 
 // Проверка, вошел ли пользователь
 if (!isset($_SESSION['user_id'])) {
@@ -44,6 +44,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['contact'])) {
     ]);
     $user['contact_info'] = $contact;
 }
+
+// Обновление email
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['email'])) {
+    $email = $_POST['email'];
+
+    // Проверка формата email
+    if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $stmt = $pdo->prepare("UPDATE users SET email = :email WHERE id = :id");
+        $stmt->execute([
+            'email' => $email,
+            'id' => $user_id
+        ]);
+        $user['email'] = $email;
+    } else {
+        $email_error = "Некорректный формат email.";
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -54,7 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['contact'])) {
     <title>Профиль</title>
     <link rel="stylesheet" href="styles.css">
 </head>
-<body>
+<body class="profile-page">
 <!-- Стрелка для возврата на главную -->
 <a href="index.php" id="back-arrow">← Назад</a>
 
@@ -66,32 +83,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['contact'])) {
 </div>
 
 <h1 id="profile-header">Профиль пользователя</h1>
-<div class="profile">
-    <!-- Изменение аватара по клику -->
-    <form method="post" enctype="multipart/form-data" id="avatar-form">
-        <label for="avatar">
-            <img src="<?= $user['avatar'] ? htmlspecialchars($user['avatar']) : 'default_avatar.jpg' ?>"
-                 alt="Аватар"
-                 class="avatar"
-                 id="profile-avatar">
-        </label>
-        <input type="file" name="avatar" id="avatar" accept="image/*" style="display: none;" required>
-        <button type="submit" id="avatar-submit" style="display: none;">Загрузить</button>
-    </form>
 
-    <h2><?= htmlspecialchars($user['username']) ?></h2>
+<!-- Каркас профиля -->
+<div class="profile-container">
+    <!-- Левый блок: аватар -->
+    <div class="profile-avatar-container">
+        <form method="post" enctype="multipart/form-data" id="avatar-form">
+            <label for="avatar">
+                <img src="<?= htmlspecialchars($user['avatar'] ?? 'default_avatar.jpg') ?>"
+                     alt="Аватар"
+                     class="avatar">
+            </label>
+            <input type="file" name="avatar" id="avatar" accept="image/*" style="display: none;" required>
+            <button type="submit" id="avatar-submit" style="display: none;">Загрузить</button>
+        </form>
+    </div>
 
-    <!-- Контактная информация -->
-    <form method="post">
-        <label for="contact">Контактная информация:</label>
-        <textarea name="contact" id="contact" placeholder="Введите ваши контактные данные"><?= htmlspecialchars($user['contact_info'] ?? '') ?></textarea>
-        <button type="submit">Сохранить</button>
-    </form>
+    <!-- Правый блок: информация -->
+    <div class="profile-info">
+        <h2><?= htmlspecialchars($user['username'] ?? 'Неизвестный пользователь') ?></h2>
 
-    <!-- Переход в панель администратора -->
-    <?php if ($_SESSION['role'] === 'admin'): ?>
-        <a href="add_product.php" id="admin-panel">Перейти в панель администратора</a>
-    <?php endif; ?>
+        <!-- Email -->
+        <form method="post" class="info-block">
+            <label for="email">Email:</label>
+            <input type="text" name="email" id="email" value="<?= htmlspecialchars($user['email'] ?? 'Не указан') ?>">
+            <button type="submit">Сохранить</button>
+            <?php if (isset($email_error)): ?>
+                <p class="error"><?= htmlspecialchars($email_error) ?></p>
+            <?php endif; ?>
+        </form>
+
+        <!-- Контактная информация -->
+        <form method="post" class="info-block">
+            <label for="contact">Контактная информация:</label>
+            <textarea name="contact" id="contact"><?= htmlspecialchars($user['contact_info'] ?? '') ?></textarea>
+            <button type="submit">Сохранить</button>
+        </form>
+
+        <!-- Роль пользователя -->
+        <div class="info-block">
+            <label for="role">Роль:</label>
+            <input type="text" id="role" value="<?= htmlspecialchars($user['role'] ?? 'Пользователь') ?>" disabled>
+        </div>
+
+        <!-- Админ-панель -->
+        <?php if ($_SESSION['role'] === 'admin'): ?>
+            <a href="add_product.php" id="admin-panel">Перейти в панель администратора</a>
+        <?php endif; ?>
+    </div>
 </div>
 
 <script>

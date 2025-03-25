@@ -1,34 +1,40 @@
 <?php
 session_start();
+require_once 'config.php';
 
-// Подключение к базе данных
-$pdo = new PDO("pgsql:host=localhost;dbname=marketplace", "postgres", "1");
-
-// Проверка, вошел ли пользователь
-$user_id = $_SESSION['user_id'] ?? null;
-
-// Если пользователь вошел, получаем его данные
+// Проверка авторизации
 $user = null;
-if ($user_id) {
+if (isset($_SESSION['user_id'])) {
     $stmt = $pdo->prepare("SELECT * FROM users WHERE id = :id");
-    $stmt->execute(['id' => $user_id]);
+    $stmt->execute(['id' => $_SESSION['user_id']]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 }
 
+// Получаем выбранную категорию
+$currentCategory = isset($_GET['category']) ? (int)$_GET['category'] : null;
 
-// Получаем список категорий для навигации
-$categoriesStmt = $pdo->query("SELECT * FROM categories");
-
-// Получаем товары в зависимости от выбранной категории
-$category = isset($_GET['category']) ? intval($_GET['category']) : null;
-$query = "SELECT * FROM products";
-if ($category) {
-    $query .= " WHERE category_id = :category";
-    $productsStmt = $pdo->prepare($query);
-    $productsStmt->execute(['category' => $category]);
-} else {
-    $productsStmt = $pdo->query($query);
+// Функция для получения названия категории
+function getCategoryName($categoryId) {
+    global $pdo;
+    $stmt = $pdo->prepare("SELECT name FROM categories WHERE id = ?");
+    $stmt->execute([$categoryId]);
+    return $stmt->fetchColumn();
 }
+
+// Запрос товаров с учетом категории
+$sql = "SELECT * FROM products";
+$params = [];
+if ($currentCategory) {
+    $sql .= " WHERE category_id = ?";
+    $params[] = $currentCategory;
+}
+$sql .= " ORDER BY id LIMIT 6";
+
+$stmt = $pdo->prepare($sql);
+$stmt->execute($params);
+$initialProducts = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+$lastProductId = !empty($initialProducts) ? end($initialProducts)['id'] : 0;
 ?>
 
 <!DOCTYPE html>
@@ -36,36 +42,23 @@ if ($category) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Магазин</title>
+    <title>Главная | OZONE</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<!-- Видео-анимация при загрузке страницы -->
-<div id="loading-screen" style="display: none;">
-    <video autoplay muted playsinline id="loading-video">
-        <source src="animation.mp4" type="video/mp4">
-        Ваш браузер не поддерживает видео.
-    </video>
-</div>
-
-<!-- Верхняя часть страницы -->
 <header>
-    <!-- Логотип магазина -->
-    <div id="logo">
-        <a href="index.php" id="logo">
-            <span>OZONE</span> <!-- Логотип как текст -->
-        </a>
-    </div>
-
-    <!-- Кнопка каталога -->
     <button id="menu-btn">☰ Каталог</button>
 
-    <!-- Иконка пользователя -->
+    <div id="logo">
+        <a href="index.php" class="logo-link">OZONE</a>
+    </div>
+
     <div id="user-menu">
-        <?php if (isset($_SESSION['user_id'])): ?>
+        <?php if ($user): ?>
             <a href="profile.php">
-                <!-- Путь к аватару пользователя или дефолтный аватар -->
-                <img src="<?= isset($user['avatar']) && !empty($user['avatar']) ? htmlspecialchars($user['avatar']) : 'default_avatar.jpg' ?>" alt="Аватар" class="header-avatar">
+                <img src="<?= htmlspecialchars($user['avatar'] ?? 'default_avatar.jpg') ?>"
+                     alt="Аватар"
+                     class="header-avatar">
             </a>
             <a href="logout.php">Выйти</a>
         <?php else: ?>
@@ -74,76 +67,142 @@ if ($category) {
     </div>
 </header>
 
-<!-- Выдвижной каталог -->
 <nav id="sidebar">
     <ul>
-        <?php while ($category = $categoriesStmt->fetch(PDO::FETCH_ASSOC)): ?>
-            <li><a href="index.php?category=<?= $category['id'] ?>"><?= htmlspecialchars($category['name']) ?></a></li>
-        <?php endwhile; ?>
+        <li><a href="index.php" class="<?= !$currentCategory ? 'active-category' : '' ?>">Все товары</a></li>
+        <?php
+        $categories = $pdo->query("SELECT * FROM categories")->fetchAll();
+        foreach ($categories as $category):
+            ?>
+            <li>
+                <a href="index.php?category=<?= $category['id'] ?>"
+                   class="<?= $currentCategory == $category['id'] ? 'active-category' : '' ?>">
+                    <?= htmlspecialchars($category['name']) ?>
+                </a>
+            </li>
+        <?php endforeach; ?>
     </ul>
 </nav>
 
-<!-- Основной контент -->
 <main>
-    <h1>Товары</h1>
-    <div class="products">
-        <?php while ($product = $productsStmt->fetch(PDO::FETCH_ASSOC)): ?>
-            <div class="product">
-                <img src="images/<?= htmlspecialchars($product['main_image']) ?>" alt="<?= htmlspecialchars($product['name']) ?>">
+    <h1><?= $currentCategory ? 'Категория: '.htmlspecialchars(getCategoryName($currentCategory)) : 'Все товары' ?></h1>
+
+    <div class="products" id="productsContainer">
+        <?php foreach ($initialProducts as $product): ?>
+            <div class="product" data-product-id="<?= $product['id'] ?>">
+                <img src="images/<?= htmlspecialchars($product['main_image']) ?>"
+                     alt="<?= htmlspecialchars($product['name']) ?>"
+                     loading="lazy">
                 <h2><?= htmlspecialchars($product['name']) ?></h2>
                 <a href="product.php?id=<?= $product['id'] ?>">Подробнее</a>
             </div>
-        <?php endwhile; ?>
+        <?php endforeach; ?>
+    </div>
+
+    <div id="loader" class="loader" style="display: none;">
+        <div class="spinner"></div>
+    </div>
+
+    <div id="endMessage" style="display: none; text-align: center; padding: 20px;">
+        <p>Вы просмотрели все товары</p>
     </div>
 </main>
 
 <script>
-    // Логика для выдвижного каталога
+    // Состояние загрузки
+    const productState = {
+        isLoading: false,
+        lastProductId: <?= $lastProductId ?>,
+        hasMore: true
+    };
+
+    // Текущая категория из PHP
+    const currentCategory = <?= $currentCategory ?: 'null' ?>;
+
+    // Функция загрузки товаров
+    async function loadMoreProducts() {
+        if (productState.isLoading || !productState.hasMore) return;
+
+        productState.isLoading = true;
+        document.getElementById('loader').style.display = 'block';
+
+        try {
+            const url = `api/get_products.php?last_id=${productState.lastProductId}&limit=6${
+                currentCategory ? `&category=${currentCategory}` : ''
+            }`;
+
+            const response = await fetch(url);
+            const products = await response.json();
+
+            if (products.length > 0) {
+                renderProducts(products);
+                productState.lastProductId = products[products.length - 1].id;
+            } else {
+                productState.hasMore = false;
+                document.getElementById('endMessage').style.display = 'block';
+            }
+        } catch (error) {
+            console.error("Ошибка загрузки:", error);
+        } finally {
+            productState.isLoading = false;
+            document.getElementById('loader').style.display = 'none';
+        }
+    }
+
+    // Функция отрисовки товаров
+    function renderProducts(products) {
+        const container = document.getElementById('productsContainer');
+
+        products.forEach(product => {
+            if (!document.querySelector(`[data-product-id="${product.id}"]`)) {
+                const productCard = document.createElement('div');
+                productCard.className = 'product';
+                productCard.dataset.productId = product.id;
+                productCard.innerHTML = `
+                    <img src="images/${escapeHtml(product.main_image)}"
+                         alt="${escapeHtml(product.name)}"
+                         loading="lazy">
+                    <h2>${escapeHtml(product.name)}</h2>
+                    <a href="product.php?id=${product.id}">Подробнее</a>
+                `;
+                container.appendChild(productCard);
+            }
+        });
+    }
+
+    function escapeHtml(unsafe) {
+        return unsafe
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // Обработчик скролла
+    window.addEventListener('scroll', () => {
+        if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 500) {
+            loadMoreProducts();
+        }
+    });
+
     const menuBtn = document.getElementById('menu-btn');
     const sidebar = document.getElementById('sidebar');
 
-    let isMouseOverSidebar = false;
-
-    menuBtn.addEventListener('mouseover', () => {
-        sidebar.classList.add('active'); // Добавляем класс для активации
+    menuBtn.addEventListener('click', () => {
+        sidebar.classList.toggle('active');
     });
 
-    // Когда мышь входит в каталог (sidebar)
-    sidebar.addEventListener('mouseenter', () => {
-        sidebar.classList.add('active'); // Удерживаем каталог активным
-    });
-
-    // При уходе мыши с каталога
-    sidebar.addEventListener('mouseleave', () => {
-        sidebar.classList.remove('active'); // Убираем класс для скрытия
-    });
-
-    // При уходе мыши с кнопки меню
-    menuBtn.addEventListener('mouseleave', () => {
-        sidebar.classList.remove('active'); // Убираем класс для скрытия
-    });
-
-    // Логика для воспроизведения видео один раз в день
-    document.addEventListener("DOMContentLoaded", () => {
-        const loadingScreen = document.getElementById("loading-screen");
-        const loadingVideo = document.getElementById("loading-video");
-
-        // Получаем текущую дату
-        const today = new Date().toISOString().split('T')[0];
-        const lastPlayed = localStorage.getItem('lastPlayedDate');
-
-        // Если видео ещё не воспроизводилось сегодня, показываем его
-        if (lastPlayed !== today) {
-            localStorage.setItem('lastPlayedDate', today);
-            loadingScreen.style.display = "flex";
-
-            loadingVideo.addEventListener("ended", () => {
-                loadingScreen.style.transition = "opacity 0.5s ease";
-                loadingScreen.style.opacity = "0";
-                setTimeout(() => loadingScreen.style.display = "none", 500); // Убираем из DOM
-            });
+    document.addEventListener('click', (e) => {
+        if (!sidebar.contains(e.target) && e.target !== menuBtn) {
+            sidebar.classList.remove('active');
         }
     });
+
+    if (document.querySelectorAll('.product').length < 6) {
+        productState.hasMore = false;
+        document.getElementById('endMessage').style.display = 'block';
+    }
 </script>
 </body>
 </html>

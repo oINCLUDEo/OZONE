@@ -1,6 +1,5 @@
 <?php
-// Подключение к базе данных
-$pdo = new PDO("pgsql:host=localhost;dbname=marketplace", "postgres", "1");
+require_once 'config.php';
 
 // Переменные для ошибок
 $username_err = $password_err = $confirm_password_err = $avatar_err = "";
@@ -85,14 +84,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <link rel="stylesheet" href="styles.css">
 </head>
 <body id="login-body">
-<!-- Логотип -->
-<div class="logo-container">
-    <a href="index.php" id="logo">
-        <h1>OZONE</h1>
-    </a>
-</div>
 
 <div class="login-container">
+    <div class="logo-container">
+        <h1 class="logo">OZONE</h1>
+    </div>
     <h2 class="text-center">Регистрация</h2>
 
     <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="POST" enctype="multipart/form-data" class="login-form">

@@ -2,7 +2,7 @@
 session_start();
 
 // Подключаемся к базе данных
-$pdo = new PDO("pgsql:host=localhost;dbname=marketplace", "postgres", "1");
+require_once '../config.php';
 
 // Проверка, были ли отправлены данные
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
